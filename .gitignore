@@ -4,10 +4,16 @@ target/
 !**/src/test/**/target/
 
 ### IntelliJ IDEA ###
+.idea*
 .idea/modules.xml
 .idea/jarRepositories.xml
 .idea/compiler.xml
 .idea/libraries/
+.idea/uiDesigner.xml
+.idea/.gitignore
+.idea/encodings.xml
+.idea/misc.xml
+.idea/vcs.xml
 *.iws
 *.iml
 *.ipr
@@ -36,3 +42,6 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+### Project ###
+/jre-minimal/
