@@ -41,6 +41,6 @@ public class Card {
   }
 
   public String getImagePath(){
-    return "/cards/"+ toString() + ".png";
+    return "/myCards/"+ toString() + ".png";
   }
 }

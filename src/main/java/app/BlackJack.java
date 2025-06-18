@@ -23,11 +23,11 @@ public class BlackJack {
   int playerAceCount;
 
   //window //Todo: can be separate class
-  int boardWith = 600;
+  int boardWith = 1200;
   int boardHeight = boardWith;
 
-  int cardWith = 110;
-  int cardHeight = 154;
+  int cardWith = 126;
+  int cardHeight = 196;
 
   JFrame frame = new JFrame("Black Jack");
 
@@ -39,7 +39,7 @@ public class BlackJack {
 
       try{
         //draw hiddenCard
-        Image hiddenCardImage = new ImageIcon(getClass().getResource("/cards/BACK.png")).getImage();
+        Image hiddenCardImage = new ImageIcon(getClass().getResource("/myCards/BACK.png")).getImage();
         if (!stayButton.isEnabled()){
           hiddenCardImage = new ImageIcon(getClass().getResource(hiddenCard.getImagePath())).getImage();
         }
@@ -74,7 +74,7 @@ public class BlackJack {
 
           g.setFont(new Font("Arial", Font.PLAIN, 30));
           g.setColor(Color.white);
-          g.drawString(message, 220, 250);
+          g.drawString(message, 550, 300);
         }
       }catch (Exception e){
         e.printStackTrace();
