@@ -7,9 +7,19 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Random;
 
-public class BlackJack {
-  ArrayList<Card> deck;
+public class GamePanel extends JPanel{
+  JPanel buttonPanel = new JPanel();
+  JButton hitButton = new JButton("Hit");
+  JButton stayButton = new JButton("Stay");
+
   Random random = new Random();
+  ArrayList<Card> deck;
+
+  //game resolution
+  int boardWith = 1200;
+  int boardHeight = boardWith;
+  int cardWith = 126;
+  int cardHeight = 196;
 
   //dealer
   Card hiddenCard;
@@ -22,88 +32,10 @@ public class BlackJack {
   int playerSum;
   int playerAceCount;
 
-  //window //Todo: can be separate class
-  int boardWith = 1200;
-  int boardHeight = boardWith;
+  boolean isGameOver = false;
 
-  int cardWith = 126;
-  int cardHeight = 196;
-
-  JFrame frame = new JFrame("Black Jack");
-
-  //Todo: WTF?!
-  JPanel gp = new JPanel(){
-    @Override
-    protected void paintComponent(Graphics g) {
-      super.paintComponent(g);
-
-      try{
-        //draw hiddenCard
-        Image hiddenCardImage = new ImageIcon(getClass().getResource("/myCards/BACK.png")).getImage();
-        if (!stayButton.isEnabled()){
-          hiddenCardImage = new ImageIcon(getClass().getResource(hiddenCard.getImagePath())).getImage();
-        }
-        g.drawImage(hiddenCardImage, 20, 20, cardWith, cardHeight, null);
-
-        //draw dealer's hand
-        for (int i = 0; i < dealerHand.size(); i++) {
-          Card card = dealerHand.get(i);
-          Image cardImage = new ImageIcon(getClass().getResource(card.getImagePath())).getImage();
-          g.drawImage(cardImage, cardWith + 25 + (cardWith + 5) * i, 20, cardWith, cardHeight, null);
-        }
-
-        //draw player's hand
-        for (int i = 0; i < playerHand.size(); i++) {
-          Card card = playerHand.get(i);
-          Image cardImage = new ImageIcon(getClass().getResource(card.getImagePath())).getImage();
-          g.drawImage(cardImage, 20 + (cardWith + 5) * i, 320, cardWith, cardHeight, null);
-        }
-
-        if (!stayButton.isEnabled()){
-          dealerSum = reduceDealerAce();
-          playerSum = reducePlayerAce();
-
-          String message = "";
-          if (playerSum > 21 || playerSum < dealerSum){
-            message = "You Lose!";
-          } else if (dealerSum > 21 || playerSum > dealerSum) {
-            message = "You Win!";
-          } else if (playerSum == dealerSum) {
-            message = "Tie!";
-          }
-
-          g.setFont(new Font("Arial", Font.PLAIN, 30));
-          g.setColor(Color.white);
-          g.drawString(message, 550, 300);
-        }
-      }catch (Exception e){
-        e.printStackTrace();
-      }
-
-    }
-  };
-  JPanel buttonPanel = new JPanel();
-  JButton hitButton = new JButton("Hit");
-  JButton stayButton = new JButton("Stay");
-
-  public BlackJack() {
+  public GamePanel() {
     startGame();
-
-    frame.setVisible(true);
-    frame.setSize(boardWith, boardHeight);
-    frame.setLocationRelativeTo(null);
-    frame.setResizable(false);
-    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
-    gp.setLayout(new BorderLayout());
-    gp.setBackground(new Color(177, 162, 141));
-    frame.add(gp);
-
-    hitButton.setFocusable(false);
-    buttonPanel.add(hitButton);
-    stayButton.setFocusable(false);
-    buttonPanel.add(stayButton);
-    frame.add(buttonPanel, BorderLayout.SOUTH);
 
     //todo: make separate method
     hitButton.addActionListener(new ActionListener() {
@@ -116,7 +48,10 @@ public class BlackJack {
         if (reducePlayerAce() > 21){
           hitButton.setEnabled(false);
         }
-        gp.repaint();
+        if (isGameOver){
+          startGame();
+        }
+        repaint();
       }
     });
 
@@ -132,11 +67,65 @@ public class BlackJack {
           dealerAceCount += card.isAce() ? 1 : 0;
           dealerHand.add(card);
         }
-        gp.repaint();
+        if (isGameOver){
+          startGame();
+        }
+        repaint();
       }
     });
 
-    gp.repaint();
+    repaint();
+  }
+
+  @Override
+  protected void paintComponent(Graphics g) {
+    super.paintComponent(g);
+
+    try{
+      //draw hiddenCard
+      Image hiddenCardImage = new ImageIcon(getClass().getResource("/myCards/BACK.png")).getImage();
+      if (!stayButton.isEnabled()){
+        hiddenCardImage = new ImageIcon(getClass().getResource(hiddenCard.getImagePath())).getImage();
+      }
+      g.drawImage(hiddenCardImage, 20, 20, cardWith, cardHeight, null);
+
+      //draw dealer's hand
+      for (int i = 0; i < dealerHand.size(); i++) {
+        Card card = dealerHand.get(i);
+        Image cardImage = new ImageIcon(getClass().getResource(card.getImagePath())).getImage();
+        g.drawImage(cardImage, cardWith + 25 + (cardWith + 5) * i, 20, cardWith, cardHeight, null);
+      }
+
+      //draw player's hand
+      for (int i = 0; i < playerHand.size(); i++) {
+        Card card = playerHand.get(i);
+        Image cardImage = new ImageIcon(getClass().getResource(card.getImagePath())).getImage();
+        g.drawImage(cardImage, 20 + (cardWith + 5) * i, 320, cardWith, cardHeight, null);
+      }
+
+      if (!stayButton.isEnabled()){
+        dealerSum = reduceDealerAce();
+        playerSum = reducePlayerAce();
+
+        String message = "";
+        if (playerSum > 21 || playerSum < dealerSum){
+          message = "You Lose!";
+          isGameOver = true;
+        } else if (dealerSum > 21 || playerSum > dealerSum) {
+          message = "You Win!";
+          isGameOver = true;
+        } else if (playerSum == dealerSum) {
+          message = "Tie!";
+          isGameOver = true;
+        }
+
+        g.setFont(new Font("Arial", Font.PLAIN, 30));
+        g.setColor(Color.white);
+        g.drawString(message, 550, 300);
+      }
+    }catch (Exception e){
+      e.printStackTrace();
+    }
   }
 
   public void startGame(){
@@ -177,8 +166,8 @@ public class BlackJack {
     //todo: change to ENUM
     String[] types = {"C","D","H","S"};
 
-    for (int i = 0; i < types.length; i++) {
-      for (int j = 0; j < values.length; j++) {
+    for (int i = 0; i < 3; i++) {
+      for (int j = 0; j < 12; j++) {
         Card card = new Card(values[j], types[i]);
         deck.add(card);
       }
