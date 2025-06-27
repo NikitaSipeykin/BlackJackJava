@@ -24,6 +24,9 @@ public class App {
     gamePanel.buttonPanel.add(gamePanel.hitButton);
     gamePanel.stayButton.setFocusable(false);
     gamePanel.buttonPanel.add(gamePanel.stayButton);
+    gamePanel.restartButton.setFocusable(false);
+    gamePanel.restartButton.setVisible(false);
+    gamePanel.buttonPanel.add(gamePanel.restartButton);
     window.add(gamePanel.buttonPanel, BorderLayout.SOUTH);
   }
 }

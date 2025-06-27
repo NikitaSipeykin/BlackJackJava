@@ -1,8 +1,8 @@
 package app;
 
 public enum Type {
-  CHRISTS,
+  CLUBS,
   DIAMONDS,
   HEARTS,
-  SPEARS
+  SPADES
 }

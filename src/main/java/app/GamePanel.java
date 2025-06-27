@@ -8,51 +8,56 @@ import java.util.ArrayList;
 import java.util.Random;
 
 public class GamePanel extends JPanel{
+  //GENERAL
   JPanel buttonPanel = new JPanel();
   JButton hitButton = new JButton("Hit");
   JButton stayButton = new JButton("Stay");
+  JButton restartButton = new JButton("Restart");
 
   Random random = new Random();
+
+  int actualCardWidth = 63;
+  int actualCardHeight = 98;
+  int defaultPlayerCardPosition = 160;
+  int windowSize = 350;
+
+  //GAME RESOLUTION
+  //Todo: Add screen change functionality
+  int cardSize = 3;
+  int boardWith = windowSize * cardSize;
+  int boardHeight = windowSize * cardSize;
+  int cardWidth = actualCardWidth * cardSize;
+  int cardHeight = actualCardHeight * cardSize;
+  int playerCardPosition = defaultPlayerCardPosition * cardSize;
+  int gap = boardWith / 52;
+
+  //ENTITY
+  User dealer = new User();
+  User player = new User();
   ArrayList<Card> deck;
-
-  //game resolution
-  int boardWith = 1200;
-  int boardHeight = boardWith;
-  int cardWith = 126;
-  int cardHeight = 196;
-
-  //dealer
   Card hiddenCard;
-  ArrayList<Card> dealerHand;
-  int dealerSum;
-  int dealerAceCount;
-
-  //player
-  ArrayList<Card> playerHand;
-  int playerSum;
-  int playerAceCount;
-
-  boolean isGameOver = false;
 
   public GamePanel() {
     startGame();
+    buttonPanelListener();
+  }
 
-    //todo: make separate method
+  private void buttonPanelListener() {
     hitButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        Card card = deck.remove(deck.size() - 1);
-        playerSum += card.getValue();
-        playerAceCount += card.isAce() ? 1 : 0;
-        playerHand.add(card);
-        if (reducePlayerAce() > 21){
+        addCardFromDeck(player);
+
+        if (reduceUserAce(player) > 21){
           hitButton.setEnabled(false);
-        }
-        if (isGameOver){
-          startGame();
         }
         repaint();
       }
+    });
+
+    restartButton.addActionListener(e -> {
+      startGame();
+      repaint();
     });
 
     stayButton.addActionListener(new ActionListener() {
@@ -61,19 +66,12 @@ public class GamePanel extends JPanel{
         hitButton.setEnabled(false);
         stayButton.setEnabled(false);
 
-        while (dealerSum < 17){
-          Card card = deck.remove(deck.size() - 1);
-          dealerSum += card.getValue();
-          dealerAceCount += card.isAce() ? 1 : 0;
-          dealerHand.add(card);
-        }
-        if (isGameOver){
-          startGame();
+        while (dealer.sum < 17){
+          addCardFromDeck(dealer);
         }
         repaint();
       }
     });
-
     repaint();
   }
 
@@ -84,92 +82,88 @@ public class GamePanel extends JPanel{
     try{
       //draw hiddenCard
       Image hiddenCardImage = new ImageIcon(getClass().getResource("/myCards/BACK.png")).getImage();
+
       if (!stayButton.isEnabled()){
         hiddenCardImage = new ImageIcon(getClass().getResource(hiddenCard.getImagePath())).getImage();
       }
-      g.drawImage(hiddenCardImage, 20, 20, cardWith, cardHeight, null);
 
-      //draw dealer's hand
-      for (int i = 0; i < dealerHand.size(); i++) {
-        Card card = dealerHand.get(i);
-        Image cardImage = new ImageIcon(getClass().getResource(card.getImagePath())).getImage();
-        g.drawImage(cardImage, cardWith + 25 + (cardWith + 5) * i, 20, cardWith, cardHeight, null);
-      }
+      g.drawImage(hiddenCardImage, gap, 20, cardWidth, cardHeight, null);
 
-      //draw player's hand
-      for (int i = 0; i < playerHand.size(); i++) {
-        Card card = playerHand.get(i);
-        Image cardImage = new ImageIcon(getClass().getResource(card.getImagePath())).getImage();
-        g.drawImage(cardImage, 20 + (cardWith + 5) * i, 320, cardWith, cardHeight, null);
-      }
+      drawUserHand(dealer, g, gap + cardWidth + 5, 20);
+      drawUserHand(player, g, gap, playerCardPosition);
 
-      if (!stayButton.isEnabled()){
-        dealerSum = reduceDealerAce();
-        playerSum = reducePlayerAce();
+      checkWhoWon(g);
 
-        String message = "";
-        if (playerSum > 21 || playerSum < dealerSum){
-          message = "You Lose!";
-          isGameOver = true;
-        } else if (dealerSum > 21 || playerSum > dealerSum) {
-          message = "You Win!";
-          isGameOver = true;
-        } else if (playerSum == dealerSum) {
-          message = "Tie!";
-          isGameOver = true;
-        }
-
-        g.setFont(new Font("Arial", Font.PLAIN, 30));
-        g.setColor(Color.white);
-        g.drawString(message, 550, 300);
-      }
     }catch (Exception e){
       e.printStackTrace();
     }
   }
 
   public void startGame(){
+    hitButton.setEnabled(true);
+    stayButton.setEnabled(true);
+    restartButton.setVisible(false);
+
     buildDeck();
     shuffleDeck();
 
-    //DEALER //Todo: can be separate class
-    dealerHand = new ArrayList<Card>();
-    dealerSum = 0;
-    dealerAceCount = 0;
+    createUserStartHand(dealer, 1, true);
+    createUserStartHand(player, 2, false);
+  }
 
-    hiddenCard = deck.remove(deck.size() - 1); //remove card from last index
-    dealerSum += hiddenCard.getValue();
-    dealerAceCount += hiddenCard.isAce() ? 1 : 0;
+  public void createUserStartHand(User user, int cardCount, boolean isDealer){
+    user.hand = new ArrayList<Card>();
+    user.sum = 0;
+    user.aceCount = 0;
 
-    Card card = deck.remove(deck.size() - 1);
-    dealerSum += card.getValue();
-    dealerAceCount += card.isAce() ? 1 : 0;
-    dealerHand.add(card);
-
-    //PLAYER //Todo: can be separate class
-    playerHand = new ArrayList<Card>();
-    playerSum = 0;
-    playerAceCount = 0;
-
-    for (int i = 0; i < 2; i++) {
-      card = deck.remove(deck.size() - 1);
-      playerSum += card.getValue();
-      playerAceCount += card.isAce() ? 1 : 0;
-      playerHand.add(card);
+    if (isDealer){
+      hiddenCard = deck.remove(deck.size() - 1);
+      user.sum += hiddenCard.getValue();
+      user.aceCount += hiddenCard.isAce() ? 1 : 0;
     }
+
+    for (int i = 0; i < cardCount; i++) {
+      Card card = deck.remove(deck.size() - 1);
+      user.sum += card.getValue();
+      user.aceCount += card.isAce() ? 1 : 0;
+      user.hand.add(card);
+    }
+  }
+
+  private void checkWhoWon(Graphics g) {
+    if (!stayButton.isEnabled()) {
+      dealer.sum = reduceUserAce(dealer);
+      player.sum = reduceUserAce(player);
+
+      String message = "";
+      if (player.isOutOfRange() || player.sum < dealer.sum) {
+        message = "You Lose!";
+      } else if (dealer.isOutOfRange() || player.sum > dealer.sum) {
+        message = "You Win!";
+      } else if (player.sum == dealer.sum) {
+        message = "Tie!";
+      }
+
+      g.setFont(new Font("Arial", Font.PLAIN, 30));
+      g.setColor(Color.white);
+      g.drawString(message, (boardWith / 2) - 60, cardHeight + (cardHeight / 2));
+      restartButton.setVisible(true);
+    }
+  }
+
+  public void addCardFromDeck(User user){
+    Card card = deck.remove(deck.size() - 1);
+    user.sum += card.getValue();
+    user.aceCount += card.isAce() ? 1 : 0;
+    user.hand.add(card);
   }
 
   public void buildDeck(){
     deck = new ArrayList<Card>();
-    //todo: change to ENUM
-    String[] values = {"A","2","3","4","5","6","7","8","9","10","J","Q","K"};
-    //todo: change to ENUM
-    String[] types = {"C","D","H","S"};
 
-    for (int i = 0; i < 3; i++) {
-      for (int j = 0; j < 12; j++) {
-        Card card = new Card(values[j], types[i]);
-        deck.add(card);
+    for (Type type : Type.values()) {
+      for (Values value : Values.values()) {
+        deck.add(new Card(value, type));
       }
     }
   }
@@ -184,20 +178,19 @@ public class GamePanel extends JPanel{
     }
   }
 
-  public int reducePlayerAce(){
-    while (playerSum > 21 && playerAceCount > 0){
-      playerSum -= 10;
-      playerAceCount -= 1;
-    }
-    return playerSum;
+  public void drawUserHand(User user, Graphics g, int x, int y){
+  for (int i = 0; i < user.hand.size(); i++) {
+    Card card = user.hand.get(i);
+    Image cardImage = new ImageIcon(getClass().getResource(card.getImagePath())).getImage();
+    g.drawImage(cardImage, x + (cardWidth + gap) * i , y, cardWidth, cardHeight, null);
   }
+}
 
-  public int reduceDealerAce(){
-    while (dealerSum > 21 && dealerAceCount > 0){
-      dealerSum -= 10;
-      dealerAceCount -= 1;
+  public int reduceUserAce(User user){
+    while (user.sum > 21 && user.aceCount > 0){
+      user.sum -= 10;
+      user.aceCount -= 1;
     }
-    return dealerSum;
+    return user.sum;
   }
-
 }
