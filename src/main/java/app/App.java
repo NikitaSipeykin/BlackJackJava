@@ -2,10 +2,10 @@ package app;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
 
 public class App {
   public static JFrame window;
+
   public static void main(String[] args) {
     window = new JFrame("Black Jack");
     GamePanel gamePanel = new GamePanel();
@@ -20,13 +20,25 @@ public class App {
     gamePanel.setBackground(new Color(177, 162, 141));
     window.add(gamePanel);
 
+    gamePanel.buttonPanel.setLayout(new BorderLayout());
+    JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+
+    gamePanel.settingsButton.setFocusable(false);
+    leftPanel.add(gamePanel.settingsButton);
+
     gamePanel.hitButton.setFocusable(false);
-    gamePanel.buttonPanel.add(gamePanel.hitButton);
     gamePanel.stayButton.setFocusable(false);
-    gamePanel.buttonPanel.add(gamePanel.stayButton);
     gamePanel.restartButton.setFocusable(false);
     gamePanel.restartButton.setVisible(false);
-    gamePanel.buttonPanel.add(gamePanel.restartButton);
+
+    rightPanel.add(gamePanel.hitButton);
+    rightPanel.add(gamePanel.stayButton);
+    rightPanel.add(gamePanel.restartButton);
+
+    gamePanel.buttonPanel.add(leftPanel, BorderLayout.WEST);
+    gamePanel.buttonPanel.add(rightPanel, BorderLayout.EAST);
+
     window.add(gamePanel.buttonPanel, BorderLayout.SOUTH);
   }
 }

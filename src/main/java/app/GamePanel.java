@@ -2,34 +2,36 @@ package app;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Random;
 
-public class GamePanel extends JPanel{
+public class GamePanel extends JPanel {
   //GENERAL
+  Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+
   JPanel buttonPanel = new JPanel();
   JButton hitButton = new JButton("Hit");
   JButton stayButton = new JButton("Stay");
   JButton restartButton = new JButton("Restart");
+  JButton settingsButton = new JButton("Settings");
 
   Random random = new Random();
 
+  int maxWidth = screenSize.width;
+  int maxHeight = screenSize.height;
   int actualCardWidth = 63;
   int actualCardHeight = 98;
   int defaultPlayerCardPosition = 160;
   int windowSize = 350;
 
   //GAME RESOLUTION
-  //Todo: Add screen change functionality
-  int cardSize = 3;
-  int boardWith = windowSize * cardSize;
-  int boardHeight = windowSize * cardSize;
-  int cardWidth = actualCardWidth * cardSize;
-  int cardHeight = actualCardHeight * cardSize;
-  int playerCardPosition = defaultPlayerCardPosition * cardSize;
-  int gap = boardWith / 52;
+  int cardSize = 2;
+  int boardWith;
+  int boardHeight;
+  int cardWidth;
+  int cardHeight;
+  int playerCardPosition;
+  int gap;
 
   //ENTITY
   User dealer = new User();
@@ -38,40 +40,80 @@ public class GamePanel extends JPanel{
   Card hiddenCard;
 
   public GamePanel() {
+    updateResolution();
     startGame();
     buttonPanelListener();
   }
 
-  private void buttonPanelListener() {
-    hitButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        addCardFromDeck(player);
+  private void updateResolution() {
+    boardWith = windowSize * cardSize;
+    boardHeight = windowSize * cardSize;
+    cardWidth = actualCardWidth * cardSize;
+    cardHeight = actualCardHeight * cardSize;
+    playerCardPosition = defaultPlayerCardPosition * cardSize;
+    gap = boardWith / 52;
+  }
 
-        if (reduceUserAce(player) > 21){
-          hitButton.setEnabled(false);
-        }
-        repaint();
+  private void showSettingsDialog() {
+    String[] options = {"Small", "Medium"};
+    String choice = (String) JOptionPane.showInputDialog(
+        App.window,
+        "Choose screen size",
+        "Settings",
+        JOptionPane.PLAIN_MESSAGE,
+        null, options, options[cardSize - 1]
+    );
+
+    if (choice != null) {
+      switch (choice) {
+        case "Small" -> cardSize = 1;
+        case "Medium" -> cardSize = 2;
       }
+
+      updateResolution();
+
+      int newWidth = Math.min(boardWith, maxWidth);
+      int newHeight = Math.min(boardHeight, maxHeight);
+
+      App.window.setSize(newWidth, newHeight);
+      App.window.setLocationRelativeTo(null);
+      App.window.revalidate();
+    }
+  }
+
+  private void buttonPanelListener() {
+    //SETTINGS
+    settingsButton.addActionListener(e -> {
+      showSettingsDialog();
     });
 
-    restartButton.addActionListener(e -> {
+    //HIT
+    hitButton.addActionListener(actionEvent -> {
+      addCardFromDeck(player);
+
+      if (reduceUserAce(player) > 21) {
+        hitButton.setEnabled(false);
+      }
+      repaint();
+    });
+
+    //RESTART
+    restartButton.addActionListener(actionEvent -> {
       startGame();
       repaint();
     });
 
-    stayButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        hitButton.setEnabled(false);
-        stayButton.setEnabled(false);
+    //STAY
+    stayButton.addActionListener(actionEvent -> {
+      hitButton.setEnabled(false);
+      stayButton.setEnabled(false);
 
-        while (dealer.sum < 17){
-          addCardFromDeck(dealer);
-        }
-        repaint();
+      while (dealer.sum < 17) {
+        addCardFromDeck(dealer);
       }
+      repaint();
     });
+
     repaint();
   }
 
@@ -79,11 +121,11 @@ public class GamePanel extends JPanel{
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
 
-    try{
+    try {
       //draw hiddenCard
       Image hiddenCardImage = new ImageIcon(getClass().getResource("/myCards/BACK.png")).getImage();
 
-      if (!stayButton.isEnabled()){
+      if (!stayButton.isEnabled()) {
         hiddenCardImage = new ImageIcon(getClass().getResource(hiddenCard.getImagePath())).getImage();
       }
 
@@ -94,12 +136,12 @@ public class GamePanel extends JPanel{
 
       checkWhoWon(g);
 
-    }catch (Exception e){
+    } catch (Exception e) {
       e.printStackTrace();
     }
   }
 
-  public void startGame(){
+  public void startGame() {
     hitButton.setEnabled(true);
     stayButton.setEnabled(true);
     restartButton.setVisible(false);
@@ -111,12 +153,12 @@ public class GamePanel extends JPanel{
     createUserStartHand(player, 2, false);
   }
 
-  public void createUserStartHand(User user, int cardCount, boolean isDealer){
+  public void createUserStartHand(User user, int cardCount, boolean isDealer) {
     user.hand = new ArrayList<Card>();
     user.sum = 0;
     user.aceCount = 0;
 
-    if (isDealer){
+    if (isDealer) {
       hiddenCard = deck.remove(deck.size() - 1);
       user.sum += hiddenCard.getValue();
       user.aceCount += hiddenCard.isAce() ? 1 : 0;
@@ -151,14 +193,14 @@ public class GamePanel extends JPanel{
     }
   }
 
-  public void addCardFromDeck(User user){
+  public void addCardFromDeck(User user) {
     Card card = deck.remove(deck.size() - 1);
     user.sum += card.getValue();
     user.aceCount += card.isAce() ? 1 : 0;
     user.hand.add(card);
   }
 
-  public void buildDeck(){
+  public void buildDeck() {
     deck = new ArrayList<Card>();
 
     for (Type type : Type.values()) {
@@ -168,7 +210,7 @@ public class GamePanel extends JPanel{
     }
   }
 
-  public void shuffleDeck(){
+  public void shuffleDeck() {
     for (int i = 0; i < deck.size(); i++) {
       int j = random.nextInt(deck.size());
       Card currCard = deck.get(i);
@@ -178,16 +220,16 @@ public class GamePanel extends JPanel{
     }
   }
 
-  public void drawUserHand(User user, Graphics g, int x, int y){
-  for (int i = 0; i < user.hand.size(); i++) {
-    Card card = user.hand.get(i);
-    Image cardImage = new ImageIcon(getClass().getResource(card.getImagePath())).getImage();
-    g.drawImage(cardImage, x + (cardWidth + gap) * i , y, cardWidth, cardHeight, null);
+  public void drawUserHand(User user, Graphics g, int x, int y) {
+    for (int i = 0; i < user.hand.size(); i++) {
+      Card card = user.hand.get(i);
+      Image cardImage = new ImageIcon(getClass().getResource(card.getImagePath())).getImage();
+      g.drawImage(cardImage, x + (cardWidth + gap) * i, y, cardWidth, cardHeight, null);
+    }
   }
-}
 
-  public int reduceUserAce(User user){
-    while (user.sum > 21 && user.aceCount > 0){
+  public int reduceUserAce(User user) {
+    while (user.sum > 21 && user.aceCount > 0) {
       user.sum -= 10;
       user.aceCount -= 1;
     }
